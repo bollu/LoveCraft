@@ -22,6 +22,7 @@ file(GLOB SOURCES "src/*.c")
 # Libraries
 # =========
 target_link_libraries(lovecraft PUBLIC libsdl2.a)
+target_link_libraries(lovecraft PUBLIC libGLEW.a)
 
 # add_library(testStudent SHARED ${SOURCES})
 
