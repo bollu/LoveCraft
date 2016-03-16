@@ -19,11 +19,23 @@ include_directories(include)
 file(GLOB SOURCES "src/*.c")
 
 
+
 # Libraries
 # =========
+# target_link_libraries(lovecraft PUBLIC libgl.a)
 target_link_libraries(lovecraft PUBLIC libsdl2.a)
 target_link_libraries(lovecraft PUBLIC libGLEW.a)
 
+if(APPLE)
+    INCLUDE_DIRECTORIES ( /System/Library/Frameworks )
+    FIND_LIBRARY(OpenGL_LIBRARY OpenGL)
+    SET(EXTRA_LIBS ${OpenGL_LIBRARY})
+endif(APPLE)
+
+target_link_libraries(lovecraft ${EXTRA_LIBS})
+
+# target_link_libraries(lovecraft PUBLIC OpenGL)
+# -framework OpenGL
 # add_library(testStudent SHARED ${SOURCES})
 
 
