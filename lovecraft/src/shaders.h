@@ -10,8 +10,8 @@ const char debug_frag_shader[] =  \
 const char debug_vertex_shader[] = \
     "#version 150\n"
     "in vec3 in_pos;\n"
-    "uniform float phase;\n"
+    "uniform mat4 rotation;\n"
     "void main() {\n"
-    "gl_Position = vec4(in_pos.xy, abs(sin(phase)) * 100, 1.0);\n"
+    "gl_Position = vec4(in_pos.xyz, 1.0) * rotation;\n"
     "}";
 

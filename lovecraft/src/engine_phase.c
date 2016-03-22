@@ -9,6 +9,8 @@
 #include <stdio.h>
 #include "gloo.h"
 #include "shaders.h"
+#include "linmath.h"
+
 void init_main_menu();
 
 void init_phases() {
@@ -32,8 +34,8 @@ void mainmenu_start(Phase *this, Settings *settings) {
 
     float vertices[] = {
         0.0f,  0.5f, 0.0f, // Vertex 1 (X, Y)
-        0.5f, -0.5f, -0.5f, // Vertex 2 (X, Y)
-        -0.5f, -0.5f, -0.9f// Vertex 3 (X, Y)
+        0.5f, -0.5f, -0, // Vertex 2 (X, Y)
+        -0.5f, -0.5f, -0// Vertex 3 (X, Y)
     };
 
     VAO vao = create_vao();
@@ -57,7 +59,12 @@ void mainmenu_update(Phase *this, float dt) {
     
     UniformLoc phase_loc = get_program_uniform(&data->program, "phase");
     glUniform1f(phase_loc, data->pulse_amt);
-
+    
+    mat4x4 rotation_mat;
+    mat4x4_identity(rotation_mat);
+    mat4x4_rotate(rotation_mat, rotation_mat, 0, 1, 0, 2.0 * data->pulse_amt);
+    UniformLoc rotation_mat_uniform = get_program_uniform(&data->program, "rotation");
+    glUniformMatrix4fv(rotation_mat_uniform, 1, GL_FALSE, &rotation_mat[0][0]);
     printf("\b in update");
 }
 
