@@ -31,9 +31,9 @@ void mainmenu_start(Phase *this, Settings *settings) {
     data->pulse_amt = 0;
 
     float vertices[] = {
-        0.0f,  0.5f, // Vertex 1 (X, Y)
-        0.5f, -0.5f, // Vertex 2 (X, Y)
-        -0.5f, -0.5f  // Vertex 3 (X, Y)
+        0.0f,  0.5f, 0.0f, // Vertex 1 (X, Y)
+        0.5f, -0.5f, -0.5f, // Vertex 2 (X, Y)
+        -0.5f, -0.5f, -0.9f// Vertex 3 (X, Y)
     };
 
     VAO vao = create_vao();
@@ -44,7 +44,7 @@ void mainmenu_start(Phase *this, Settings *settings) {
             debug_frag_shader);
 
     data->vbo = create_vbo(STATIC_DRAW, vertices, sizeof(vertices));
-    set_program_attrib(&data->program, "in_pos", 2, GL_FLOAT, 0, 0);
+    set_program_attrib(&data->program, "in_pos", 3, GL_FLOAT, 0, 0);
 
 
 
