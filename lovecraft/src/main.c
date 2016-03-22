@@ -4,44 +4,14 @@
 #include <sdl/SDL.h>
 #include <sdl/SDL_opengl.h>
 
-typedef enum {
-    NoEvent,
-    QuitEvent,
-} GameEventType;
+#include "engine_common.h"
+#include "engine_phase.h"
 
-typedef union  {
-    GameEventType type;
-} GameEvent;
+#define bool int
+#define true 1
+#define false 0
 
-
-
-typedef struct {
-    SDL_Keycode key_escape;
-    SDL_Keycode key_left;
-} Settings;
-
-
-GameEvent game_event_from_raw(const SDL_Event *event, const Settings *settings) {
-    GameEvent game_event;
-
-    if (event->type == SDL_QUIT) {
-        game_event.type = QuitEvent;
-    }
-    else if (event->type == SDL_KEYDOWN) {
-        if (event->key.keysym.sym == settings->key_escape){
-            game_event.type = QuitEvent;
-        }
-    }
-    return game_event;
-};
-
-Settings load_settings(const char* filepath) {
-    Settings s;
-    s.key_escape = SDLK_ESCAPE;
-    s.key_left = SDLK_a;
-    return s;
-}
-
+struct Settings;
 
 int main(int argc, char *argv[]) {
 
@@ -54,23 +24,41 @@ int main(int argc, char *argv[]) {
 
     SDL_Window* window = SDL_CreateWindow("OpenGL", 100, 100, 800, 600, SDL_WINDOW_OPENGL);
     SDL_GLContext context = SDL_GL_CreateContext(window);
-    
+
     glewExperimental = GL_TRUE;
     glewInit();
     glClearColor(0.1, 0.2, 0.3, 0);
-    
-    SDL_Event event;
-    int should_quit = 0;
+
+    SDL_Event raw_event;
+    bool should_quit = false;
+    bool started_phase = false;
 
     Settings settings = load_settings("settings.cfg");
     
+    init_phases();
+    Phase *current_phase = g_mainmenu_phase;
+
     while (!should_quit) {
-        while (SDL_PollEvent(&event)) {
-            GameEvent ge = game_event_from_raw(&event, &settings);
-            should_quit = ge.type == QuitEvent;
+
+        if (!started_phase) {
+            current_phase->fp_start(current_phase, &settings);
+            started_phase = true;
         }
 
-        glClear(GL_COLOR_BUFFER_BIT);
+        while (SDL_PollEvent(&raw_event)) {
+            Event engine_event = current_phase->fp_handle_events(current_phase, &raw_event);
+            should_quit = engine_event.type == EventQuit;
+
+            if (should_quit) {
+                break;
+            }
+        }
+
+        if (should_quit) { break; }
+
+        current_phase->fp_update(current_phase, 1.0f / 60.0f);
+        current_phase->fp_draw(current_phase, window);
+
         SDL_GL_SwapWindow(window);
     }
 
