@@ -25,6 +25,13 @@ typedef struct VAO {
 VAO create_vao();
 void bind_vao(const VAO *vao);
 
+typedef struct FBO {
+    GLuint id;
+} FBO;
+
+FBO create_fbo();
+void bind_fbo(const FBO *fbo);
+
 typedef struct Shader {
     GLuint id;
 } Shader;

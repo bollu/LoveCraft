@@ -26,6 +26,19 @@ VBO create_vbo(VBOMode mode, void *data, int size) {
 void bind_vbo(const VBO *vbo) {
     glBindBuffer(GL_ARRAY_BUFFER, vbo->id);
 };
+
+/* FBO */
+
+FBO create_fbo() {
+    FBO fbo;
+    glGenFramebuffers(1, &fbo.id);    
+    return fbo;
+};
+
+void bind_fbo(const FBO *fbo) {
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo->id);
+};
+
 /* Shaders */
 
 void internal_check_for_shader_errors(const char *shader_src, int shader_id) {

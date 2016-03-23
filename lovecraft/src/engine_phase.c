@@ -49,6 +49,7 @@ void mainmenu_start(Phase *this, Settings *settings) {
     set_program_attrib(&data->program, "in_pos", 3, GL_FLOAT, 0, 0);
 
 
+    make fbo stuff
 
     this->data = data;
 }
