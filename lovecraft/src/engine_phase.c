@@ -35,15 +35,15 @@ void mainmenu_start(Phase *this, Settings *settings) {
 
     float vertices[] = {
         //  Position        Texcoords
-        -0.5f,  0.5f,   0.0f, 0.0f, // Top-left
-         0.5f,  0.5f,   1.0f, 0.0f, // Top-right
-         0.5f, -0.5f,   1.0f, 1.0f, // Bottom-right
-        -0.5f, -0.5f,   0.0f, 1.0f  // Bottom-left
+        -0.5f,  0.5f, 0.0f,  0.0f, 0.0f, // Top-left
+         0.5f,  0.5f, 0.1f,  1.0f, 0.0f, // Top-right
+         0.5f, -0.5f, 0.3f,  1.0f, 1.0f, // Bottom-right
+        -0.5f, -0.5f, 0.9f,  0.0f, 1.0f,  // Bottom-left
+            
 };
 
     VAO vao = create_vao();
     bind_vao(&vao);
-
 
     
      data->program = compile_program_sources(texture_vertex_shader,
@@ -51,12 +51,12 @@ void mainmenu_start(Phase *this, Settings *settings) {
     
     
     data->vbo = create_vbo(STATIC_DRAW, vertices, sizeof(vertices));
-    set_program_attrib(&data->program, "in_pos", 2, GL_FLOAT, 4 * sizeof(float), 0);
+    set_program_attrib(&data->program, "in_pos", 3, GL_FLOAT, 5 * sizeof(float), 0);
 
     Texture t = load_texture_from_file("default.png");
     glBindTexture(GL_TEXTURE_2D, t.id);
 
-    set_program_attrib(&data->program, "in_texcoord", 2, GL_FLOAT, 4 * sizeof(float), (void *)(2 * sizeof(float)));
+    set_program_attrib(&data->program, "in_texcoord", 2, GL_FLOAT, 5 * sizeof(float), (void *)(3 * sizeof(float)));
 
     //data->fbo = create_fbo();
 
@@ -79,7 +79,7 @@ void mainmenu_update(Phase *this, float dt) {
 
 void mainmenu_draw(const Phase *this, SDL_Window *w) {
     glClearColor(0, 0, 0, 0);
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 }
 

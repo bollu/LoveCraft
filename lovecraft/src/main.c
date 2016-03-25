@@ -35,6 +35,8 @@ int main(int argc, char *argv[]) {
     //enable openGL stuff
     glEnable(GL_BLEND);
     glEnable(GL_TEXTURE_2D);
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
     
     glClearColor(0.1, 0.2, 0.3, 0);
 
