@@ -27,10 +27,13 @@ void bind_vao(const VAO *vao);
 
 typedef struct FBO {
     GLuint id;
+    GLuint tex_id;
+    GLuint depthstencil_id;
 } FBO;
 
 FBO create_fbo();
 void bind_fbo(const FBO *fbo);
+void unbind_fbo();
 
 typedef struct Shader {
     GLuint id;
@@ -62,5 +65,12 @@ void set_program_attrib(const ShaderProgram *program,
         GLsizei stride,
         const void *data);
 
-//typedef GLint AttribIndex;
-//AttribIndex get_shader_attrib(ShaderProgram *program, const char *name);
+typedef struct Texture {
+    GLuint width;
+    GLuint height;
+    GLuint id;
+} Texture;
+
+Texture create_texture(GLuint width, GLuint height);
+Texture load_texture_from_file(const char *filepath);
+

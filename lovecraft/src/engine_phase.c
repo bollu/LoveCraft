@@ -23,6 +23,7 @@ typedef struct {
     Settings *settings;
     ShaderProgram program;
     float pulse_amt;
+    FBO fbo;
     VBO vbo;
 } MainMenuData;
 
@@ -48,8 +49,7 @@ void mainmenu_start(Phase *this, Settings *settings) {
     data->vbo = create_vbo(STATIC_DRAW, vertices, sizeof(vertices));
     set_program_attrib(&data->program, "in_pos", 3, GL_FLOAT, 0, 0);
 
-
-    make fbo stuff
+    data->fbo = create_fbo();
 
     this->data = data;
 }
