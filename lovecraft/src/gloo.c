@@ -1,5 +1,6 @@
 #include "gloo.h"
 #include "engine_common.h"
+#include "sdl_image/SDL_image.h"
 
 /* VAO */
 
@@ -141,11 +142,27 @@ void set_program_attrib(const ShaderProgram *program,
     glEnableVertexAttribArray(attrib_loc);
 };
 
+/*
+   Texture create_texture(GLuint width, GLuint height) {
+   return t;
+   };
+   */
 
-Texture create_texture(GLuint width, GLuint height) {
+Texture load_texture_from_file(const char *filepath) {
     Texture t;
     glGenTextures(1, &t.id);
     glBindTexture(GL_TEXTURE_2D, t.id);
+
+    SDL_Surface *image = IMG_Load(filepath);
+    if (image == NULL) {
+        g_log_error("unable to load image: %s", filepath);
+    }
+    t.width = image->w;
+    t.height = image->h;
+
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image->w, image->h, 0, GL_RGBA,
+            GL_UNSIGNED_BYTE, image->pixels);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -153,10 +170,10 @@ Texture create_texture(GLuint width, GLuint height) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glGenerateMipmap(GL_TEXTURE_2D);
 
+    //reduntant?
+    //glActivateTexture(GL_TEXTURE0);
+    SDL_FreeSurface(image);
 
-    return t;
-};
-Texture load_texture_from_file(const char *filepath) {
-    Texture t;
+
     return t;
 };

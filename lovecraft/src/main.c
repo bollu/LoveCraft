@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <sdl/SDL.h>
 #include <sdl/SDL_opengl.h>
+#include <sdl_image/SDL_image.h>
 
 #include "engine_common.h"
 #include "engine_phase.h"
@@ -23,11 +24,18 @@ int main(int argc, char *argv[]) {
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
 
+    IMG_Init(IMG_INIT_PNG);
+
     SDL_Window* window = SDL_CreateWindow("OpenGL", 100, 100, 800, 600, SDL_WINDOW_OPENGL);
     SDL_GLContext context = SDL_GL_CreateContext(window);
 
     glewExperimental = GL_TRUE;
     glewInit();
+
+    //enable openGL stuff
+    glEnable(GL_BLEND);
+    glEnable(GL_TEXTURE_2D);
+    
     glClearColor(0.1, 0.2, 0.3, 0);
 
     SDL_Event raw_event;

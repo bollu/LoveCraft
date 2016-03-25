@@ -15,6 +15,5 @@ typedef struct Settings{
 
 Settings load_settings(const char* filepath);
 
-
 //Logging functions in the engine
 void g_log_error(const char *err_format, ...);

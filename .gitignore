@@ -37,5 +37,6 @@ storyboard/
 # Mac stuff
 .DS_Store
 build/
+build/**
 
 .idea/

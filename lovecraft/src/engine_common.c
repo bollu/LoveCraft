@@ -10,11 +10,12 @@
 
 
 void g_log_error(const char *err_format, ...) {
-    printf("Error:\n");
+    printf("\n\nError:\n------\n");
 
     va_list argptr;
     va_start(argptr, err_format);
     vfprintf(stdout, err_format, argptr);
+    printf("\n");
     va_end(argptr);
     
     assert(false && "internal engine error");

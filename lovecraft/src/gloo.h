@@ -71,6 +71,7 @@ typedef struct Texture {
     GLuint id;
 } Texture;
 
-Texture create_texture(GLuint width, GLuint height);
+//don't think this needs to be public
+//Texture create_texture(GLuint width, GLuint height);
 Texture load_texture_from_file(const char *filepath);
 

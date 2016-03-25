@@ -10,6 +10,7 @@ set (Tutorial_VERSION_MINOR 0)
 # Includes
 # ========
 include_directories("include/")
+include_directories("include/sdl/")
 
 # Sources
 # =======
@@ -34,6 +35,7 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror" )
 # target_link_libraries(lovecraft PUBLIC libgl.a)
 target_link_libraries(lovecraft PUBLIC libSDL2.a)
 target_link_libraries(lovecraft PUBLIC libGLEW.a)
+target_link_libraries(lovecraft PUBLIC libSDL2_image.a)
 
 if(APPLE)
     INCLUDE_DIRECTORIES(/System/Library/Frameworks)
