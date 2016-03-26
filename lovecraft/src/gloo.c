@@ -3,7 +3,6 @@
 #include "sdl_image/SDL_image.h"
 
 /* VAO */
-
 VAO create_vao() {
     VAO vao;
     glGenVertexArrays(1, &vao.id);
@@ -34,7 +33,8 @@ FBO create_fbo(int width, int height) {
     FBO fbo;
     fbo.tex_id = -1;
     glGenFramebuffers(1, &fbo.id);    
-
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo.id);
+    //texture for color
     glGenTextures(1, &fbo.tex_id);
     glBindTexture(GL_TEXTURE_2D, fbo.tex_id);
 
@@ -54,21 +54,28 @@ FBO create_fbo(int width, int height) {
     glFramebufferTexture2D(GL_FRAMEBUFFER,
             GL_COLOR_ATTACHMENT0,
             GL_TEXTURE_2D, fbo.tex_id, 0);
+
+
+    //depth, stencil buffer
     glGenRenderbuffers(1, &fbo.depthstencil_id);
     glBindRenderbuffer(GL_RENDERBUFFER, fbo.depthstencil_id);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, 800, 600);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, 800, 600);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER,
+            GL_DEPTH_STENCIL_ATTACHMENT,
+            GL_RENDERBUFFER,
+            fbo.depthstencil_id);
+
 
     return fbo;
 };
 
-void bind_fbo(const FBO *fbo) {                 \
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo->id); \
+void bind_fbo(const FBO *fbo) {                 
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo->id); 
 }
 
 
 void unbind_fbo() {
-    bind_fbo(NULL);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0); 
 };
 /* Shaders */
 
@@ -126,6 +133,10 @@ ShaderProgram compile_program_sources(const char *vertex_shader_src,
 
 };
 
+void bind_program(const ShaderProgram *program) {
+    glUseProgram(program->id);
+};
+
 UniformLoc get_program_uniform(const ShaderProgram *program,
         const char *uniform_name) {
     return glGetUniformLocation(program->id, uniform_name);
@@ -141,12 +152,6 @@ void set_program_attrib(const ShaderProgram *program,
     glVertexAttribPointer(attrib_loc, size, type, false, stride, data);
     glEnableVertexAttribArray(attrib_loc);
 };
-
-/*
-   Texture create_texture(GLuint width, GLuint height) {
-   return t;
-   };
-   */
 
 Texture load_texture_from_file(const char *filepath) {
     Texture t;
@@ -176,4 +181,7 @@ Texture load_texture_from_file(const char *filepath) {
 
 
     return t;
+};
+void bind_texture(const Texture *texture) {
+    glBindTexture(GL_TEXTURE_2D, texture->id);
 };

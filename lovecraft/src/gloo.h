@@ -31,7 +31,7 @@ typedef struct FBO {
     GLuint depthstencil_id;
 } FBO;
 
-FBO create_fbo();
+FBO create_fbo(int width, int height);
 void bind_fbo(const FBO *fbo);
 void unbind_fbo();
 
@@ -50,6 +50,8 @@ typedef struct ShaderProgram {
 
 ShaderProgram compile_program_sources(const char *vertex_shader_src,
         const char* frag_shader_src);
+
+void bind_program(const ShaderProgram *program);
 
 typedef GLint UniformLoc;
 UniformLoc get_program_uniform(const ShaderProgram *program,
@@ -74,4 +76,4 @@ typedef struct Texture {
 //don't think this needs to be public
 //Texture create_texture(GLuint width, GLuint height);
 Texture load_texture_from_file(const char *filepath);
-
+void bind_texture(const Texture *texture);

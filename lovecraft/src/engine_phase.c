@@ -24,7 +24,11 @@ typedef struct {
     ShaderProgram program;
     float pulse_amt;
     FBO fbo;
-    VBO vbo;
+    VBO render_vbo;
+    VBO fbo_quad_vbo;
+    VAO render_vao;
+    VAO fbo_vao;
+    Texture texture;
 } MainMenuData;
 
 void mainmenu_start(Phase *this, Settings *settings) {
@@ -33,32 +37,56 @@ void mainmenu_start(Phase *this, Settings *settings) {
     data->settings = settings;
     data->pulse_amt = 0;
 
-    float vertices[] = {
+    float render_vertices[] = {
         //  Position        Texcoords
-        -0.5f,  0.5f, 0.0f,  0.0f, 0.0f, // Top-left
-         0.5f,  0.5f, 0.1f,  1.0f, 0.0f, // Top-right
-         0.5f, -0.5f, 0.3f,  1.0f, 1.0f, // Bottom-right
-        -0.5f, -0.5f, 0.9f,  0.0f, 1.0f,  // Bottom-left
-            
-};
+        -0.5f,  0.5f, 0,  0.0f, 0.0f, // Top-left
+         0.5f,  0.5f, 1,  1.0f, 0.0f, // Top-right
+         0.5f, -0.5f, 1,  1.0f, 1.0f, // Bottom-right
+        -0.5f, -0.5f, 0,  0.0f, 1.0f  // Bottom-left
+    };
 
-    VAO vao = create_vao();
-    bind_vao(&vao);
+    float quad_vertices[] = {
+        //  Position        Texcoords
+        -1,  1, 0,  0.0f, 0.0f, // Top-left
+         1,  1, 0,  1.0f, 0.0f, // Top-right
+         1, -1, 0,  1.0f, 1.0f, // Bottom-right
+        -1, -1, 0,  0.0f, 1.0f,  // Bottom-left
+    };
 
-    
+    data->fbo = create_fbo(800, 600);
+
+    data->texture = load_texture_from_file("default.png");
+
+    data->render_vbo = create_vbo(STATIC_DRAW, render_vertices, sizeof(render_vertices));
+    data->fbo_quad_vbo = create_vbo(STATIC_DRAW, quad_vertices, sizeof(quad_vertices));
+
+    data->render_vao = create_vao();
+    data->fbo_vao = create_vao();
+
      data->program = compile_program_sources(texture_vertex_shader,
             texture_frag_shader);
     
+    //bind VAO for rendering
+    bind_vao(&data->render_vao);
+    bind_vbo(&data->render_vbo);
+    bind_texture(&data->texture);
+
+
+    bind_program(&data->program);
     
-    data->vbo = create_vbo(STATIC_DRAW, vertices, sizeof(vertices));
     set_program_attrib(&data->program, "in_pos", 3, GL_FLOAT, 5 * sizeof(float), 0);
-
-    Texture t = load_texture_from_file("default.png");
-    glBindTexture(GL_TEXTURE_2D, t.id);
-
     set_program_attrib(&data->program, "in_texcoord", 2, GL_FLOAT, 5 * sizeof(float), (void *)(3 * sizeof(float)));
 
-    //data->fbo = create_fbo();
+
+    //bind VAO for this shader
+    bind_vao(&data->fbo_vao);
+    bind_vbo(&data->fbo_quad_vbo);
+    glBindTexture(GL_TEXTURE_2D, data->fbo.tex_id);
+
+    bind_program(&data->program);
+    
+    set_program_attrib(&data->program, "in_pos", 3, GL_FLOAT, 5 * sizeof(float), 0);
+    set_program_attrib(&data->program, "in_texcoord", 2, GL_FLOAT, 5 * sizeof(float), (void *)(3 * sizeof(float)));
 
     this->data = data;
 }
@@ -66,21 +94,39 @@ void mainmenu_update(Phase *this, float dt) {
     MainMenuData *data = this->data;
     data->pulse_amt = (data->pulse_amt > 3.14 ? 0 : data->pulse_amt) + dt;
     
+    
     UniformLoc phase_loc = get_program_uniform(&data->program, "phase");
     glUniform1f(phase_loc, data->pulse_amt);
     
     mat4x4 rotation_mat;
     mat4x4_identity(rotation_mat);
-    mat4x4_rotate(rotation_mat, rotation_mat, 0, 1, 0, 2.0 * data->pulse_amt);
+    mat4x4_rotate(rotation_mat, rotation_mat, 0, 1, 0, data->pulse_amt);
     UniformLoc rotation_mat_uniform = get_program_uniform(&data->program, "rotation");
     glUniformMatrix4fv(rotation_mat_uniform, 1, GL_FALSE, &rotation_mat[0][0]);
-    printf("\b in update");
+    printf("\n in update");
 }
 
 void mainmenu_draw(const Phase *this, SDL_Window *w) {
-    glClearColor(0, 0, 0, 0);
+    unbind_fbo();
+    glClearColor(0.1, 0, 0, 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    MainMenuData *data = this->data;
+    bind_fbo(&data->fbo);
+        glClearColor(0, 1, 0, 0);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        bind_vao(&data->render_vao);
+        bind_texture(&data->texture);
+        bind_program(&data->program);
+
+        glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+    unbind_fbo();
+
+    
+    bind_vao(&data->fbo_vao);
+    glBindTexture(GL_TEXTURE_2D, data->fbo.tex_id);
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+   
 }
 
 Event mainmenu_handle_events(Phase *this, SDL_Event *e) {

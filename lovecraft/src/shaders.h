@@ -25,7 +25,7 @@ const char texture_vertex_shader[] = \
   "uniform mat4 rotation;\n"
   "void main() {\n"
   "    Texcoord = in_texcoord;\n"
-  "    gl_Position = vec4(in_pos.xyz, 1.0) * rotation;\n"
+  "    gl_Position = vec4(in_pos.xyz, 1.0);\n"
   "}";
 
 

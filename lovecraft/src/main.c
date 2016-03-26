@@ -38,7 +38,6 @@ int main(int argc, char *argv[]) {
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
     
-    glClearColor(0.1, 0.2, 0.3, 0);
 
     SDL_Event raw_event;
     bool should_quit = false;
