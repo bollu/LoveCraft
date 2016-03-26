@@ -25,15 +25,6 @@ typedef struct VAO {
 VAO create_vao();
 void bind_vao(const VAO *vao);
 
-typedef struct FBO {
-    GLuint id;
-    GLuint tex_id;
-    GLuint depthstencil_id;
-} FBO;
-
-FBO create_fbo(int width, int height);
-void bind_fbo(const FBO *fbo);
-void unbind_fbo();
 
 typedef struct Shader {
     GLuint id;
@@ -77,3 +68,15 @@ typedef struct Texture {
 //Texture create_texture(GLuint width, GLuint height);
 Texture load_texture_from_file(const char *filepath);
 void bind_texture(const Texture *texture);
+
+/* FBO */
+typedef struct FBO {
+    GLuint id;
+    Texture color_texture;
+    //GLuint tex_id;
+    GLuint depthstencil_id;
+} FBO;
+
+FBO create_fbo(int width, int height);
+void bind_fbo(const FBO *fbo);
+void unbind_fbo();

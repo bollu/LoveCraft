@@ -81,7 +81,7 @@ void mainmenu_start(Phase *this, Settings *settings) {
     //bind VAO for this shader
     bind_vao(&data->fbo_vao);
     bind_vbo(&data->fbo_quad_vbo);
-    glBindTexture(GL_TEXTURE_2D, data->fbo.tex_id);
+    bind_texture(&data->fbo.color_texture);
 
     bind_program(&data->program);
     
@@ -124,7 +124,7 @@ void mainmenu_draw(const Phase *this, SDL_Window *w) {
 
     
     bind_vao(&data->fbo_vao);
-    glBindTexture(GL_TEXTURE_2D, data->fbo.tex_id);
+    bind_texture(&data->fbo.color_texture);
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
    
 }

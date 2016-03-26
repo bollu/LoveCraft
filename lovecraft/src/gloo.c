@@ -31,12 +31,11 @@ void bind_vbo(const VBO *vbo) {
 
 FBO create_fbo(int width, int height) {
     FBO fbo;
-    fbo.tex_id = -1;
     glGenFramebuffers(1, &fbo.id);    
     glBindFramebuffer(GL_FRAMEBUFFER, fbo.id);
     //texture for color
-    glGenTextures(1, &fbo.tex_id);
-    glBindTexture(GL_TEXTURE_2D, fbo.tex_id);
+    glGenTextures(1, &fbo.color_texture.id);
+    glBindTexture(GL_TEXTURE_2D, fbo.color_texture.id);
 
     glTexImage2D(GL_TEXTURE_2D,
             0,
@@ -53,7 +52,7 @@ FBO create_fbo(int width, int height) {
 
     glFramebufferTexture2D(GL_FRAMEBUFFER,
             GL_COLOR_ATTACHMENT0,
-            GL_TEXTURE_2D, fbo.tex_id, 0);
+            GL_TEXTURE_2D, fbo.color_texture.id, 0);
 
 
     //depth, stencil buffer
