@@ -46,17 +46,18 @@ int main(int argc, char *argv[]) {
     Settings settings = load_settings("settings.cfg");
     
     init_phases();
-    Phase *current_phase = g_mainmenu_phase;
+    Phase *current_phase = &g_playground_phase;
 
+    float game_update_accum = 0;
     while (!should_quit) {
 
         if (!started_phase) {
-            current_phase->fp_start(current_phase, &settings);
+            current_phase->fp_start(&settings);
             started_phase = true;
         }
 
         while (SDL_PollEvent(&raw_event)) {
-            Event engine_event = current_phase->fp_handle_events(current_phase, &raw_event);
+            Event engine_event = current_phase->fp_handle_events(&raw_event);
             should_quit = engine_event.type == EventQuit;
 
             if (should_quit) {
@@ -66,8 +67,14 @@ int main(int argc, char *argv[]) {
 
         if (should_quit) { break; }
 
-        current_phase->fp_update(current_phase, 1.0f / 60.0f);
-        current_phase->fp_draw(current_phase, window);
+        float real_dt = 1.0 / 60.0; //HACK
+        game_update_accum += real_dt;
+
+        while (game_update_accum >= 1.0 / 60.0) {
+            game_update_accum -= 1.0 / 60.0;
+            current_phase->fp_update(1.0f / 60.0f);
+        }
+        current_phase->fp_draw(window);
 
         SDL_GL_SwapWindow(window);
     }

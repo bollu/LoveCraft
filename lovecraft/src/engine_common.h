@@ -5,12 +5,15 @@
 #include "SDL/SDL.h"
 
 #define DEBUG_MODE 1
+#define bool int
 #define true 1
 #define false 0
+
 
 typedef struct Settings{
     SDL_Keycode key_escape;
     SDL_Keycode key_left;
+    int current_level;
 } Settings;
 
 Settings load_settings(const char* filepath);

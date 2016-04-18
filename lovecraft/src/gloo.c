@@ -1,3 +1,4 @@
+#include <assert.h>
 #include "gloo.h"
 #include "engine_common.h"
 #include "sdl_image/SDL_image.h"
@@ -18,13 +19,21 @@ VBO create_vbo(VBOMode mode, void *data, int size) {
     VBO vbo;
     glGenBuffers(1, &vbo.id); // Generate 1 buffer
     vbo.mode = mode;
-    glBindBuffer(GL_ARRAY_BUFFER, vbo.id);
-    glBufferData(GL_ARRAY_BUFFER, size, data, mode);
+
+    if (data && size) {
+        resend_vbo_data(&vbo, data, size);
+    }
     return vbo;
 };
 
 void bind_vbo(const VBO *vbo) {
     glBindBuffer(GL_ARRAY_BUFFER, vbo->id);
+};
+
+void resend_vbo_data(VBO *vbo, void *data, int size) {
+    assert(size > 0 && data != NULL);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo->id);
+    glBufferData(GL_ARRAY_BUFFER, size, data, vbo->mode);
 };
 
 /* FBO */
@@ -132,7 +141,7 @@ ShaderProgram compile_program_sources(const char *vertex_shader_src,
 
 };
 
-void bind_program(const ShaderProgram *program) {
+void bind_shader_program(const ShaderProgram *program) {
     glUseProgram(program->id);
 };
 
@@ -141,12 +150,12 @@ UniformLoc get_program_uniform(const ShaderProgram *program,
     return glGetUniformLocation(program->id, uniform_name);
 };
 
-void set_program_attrib(const ShaderProgram *program,
-        const char *attrib_name,
-        GLuint size,
-        GLenum type,
-        GLsizei stride,
-        const void *data) {
+void set_shader_program_attrib(const ShaderProgram *program,
+                               const char *attrib_name,
+                               GLuint size,
+                               GLenum type,
+                               GLsizei stride,
+                               const void *data) {
     GLint attrib_loc = glGetAttribLocation(program->id, attrib_name);
     glVertexAttribPointer(attrib_loc, size, type, false, stride, data);
     glEnableVertexAttribArray(attrib_loc);

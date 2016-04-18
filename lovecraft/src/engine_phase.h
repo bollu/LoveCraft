@@ -10,10 +10,10 @@ union SDL_Event;
 
 typedef struct Phase Phase;
 typedef struct Settings Settings;
-typedef void(*FnPhaseStart)(Phase *this, Settings *settings);
-typedef void(*FnPhaseUpdate)(Phase *this, float dt);
-typedef void(*FnPhaseDraw)(const Phase *this, struct SDL_Window *w);
-typedef Event (* FnPhaseHandleEvents)(Phase *this, union SDL_Event *e);
+typedef void(*FnPhaseStart)(Settings *settings);
+typedef void(*FnPhaseUpdate)(float dt);
+typedef void(*FnPhaseDraw)(struct SDL_Window *w);
+typedef Event (* FnPhaseHandleEvents)(union SDL_Event *e);
 
 struct Phase {
     FnPhaseStart fp_start;
@@ -21,11 +21,9 @@ struct Phase {
     FnPhaseDraw fp_draw;
     FnPhaseHandleEvents fp_handle_events;
     Settings *settings;
-    void *data;
 };
 
-Phase *g_mainmenu_phase;
-Phase *g_game_phase;
-Phase *g_settings_phase;
+Phase g_mainmenu_phase;
+Phase g_playground_phase;
 
 void init_phases();

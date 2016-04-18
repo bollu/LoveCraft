@@ -12,11 +12,11 @@ typedef enum VBOMode {
 typedef struct VBO {
     GLuint id;
     VBOMode mode;
-    void *data;
 } VBO;
 
 VBO create_vbo(VBOMode mode, void *data, int size);
 void bind_vbo(const VBO *vbo);
+void resend_vbo_data(VBO *vbo, void *data, int size);
 
 typedef struct VAO {
     GLuint id;
@@ -42,7 +42,7 @@ typedef struct ShaderProgram {
 ShaderProgram compile_program_sources(const char *vertex_shader_src,
         const char* frag_shader_src);
 
-void bind_program(const ShaderProgram *program);
+void bind_shader_program(const ShaderProgram *program);
 
 typedef GLint UniformLoc;
 UniformLoc get_program_uniform(const ShaderProgram *program,
@@ -51,12 +51,12 @@ UniformLoc get_program_uniform(const ShaderProgram *program,
 /*
  * assumes frag shader output is `out_color`
  */
-void set_program_attrib(const ShaderProgram *program,
-        const char *attrib_name,
-        GLuint size,
-        GLenum type,
-        GLsizei stride,
-        const void *data);
+void set_shader_program_attrib(const ShaderProgram *program,
+                               const char *attrib_name,
+                               GLuint size,
+                               GLenum type,
+                               GLsizei stride,
+                               const void *data);
 
 typedef struct Texture {
     GLuint width;
@@ -65,7 +65,6 @@ typedef struct Texture {
 } Texture;
 
 //don't think this needs to be public
-//Texture create_texture(GLuint width, GLuint height);
 Texture load_texture_from_file(const char *filepath);
 void bind_texture(const Texture *texture);
 

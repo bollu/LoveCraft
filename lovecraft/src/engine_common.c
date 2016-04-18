@@ -2,10 +2,11 @@
 #include <assert.h>
 
  Settings load_settings(const char* filepath) {
-    Settings s;
-    s.key_escape = SDLK_ESCAPE;
-    s.key_left = SDLK_a;
-    return s;
+     Settings s;
+     s.key_escape = SDLK_ESCAPE;
+     s.key_left = SDLK_a;
+     s.current_level = -1;
+     return s;
 }
 
 

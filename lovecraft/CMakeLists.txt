@@ -28,7 +28,7 @@ install(TARGETS lovecraft RUNTIME DESTINATION /usr/local/bin)
 
 # Compiler flags
 # ==============
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror" )
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror -g -O0" )
     
 # Libraries
 # =========

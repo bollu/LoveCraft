@@ -1,4 +1,5 @@
 //stolen from datenwolf/linmath. Many thanks!
+#pragma once
 #ifndef LINMATH_H
 #define LINMATH_H
 

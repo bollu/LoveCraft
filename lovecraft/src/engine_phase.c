@@ -12,13 +12,15 @@
 #include "linmath.h"
 
 void init_main_menu();
+void init_playground();
 
 void init_phases() {
-    init_main_menu();
+    //init_main_menu();
+    init_playground();
 }
 
-/* MAIN MENU PHASE */
-
+//-------------------
+// MAIN MENU PHASE
 typedef struct {
     Settings *settings;
     ShaderProgram program;
@@ -30,12 +32,13 @@ typedef struct {
     VAO fbo_vao;
     Texture texture;
 } MainMenuData;
+static MainMenuData g_mainmenu_data;
 
-void mainmenu_start(Phase *this, Settings *settings) {
-    MainMenuData *data = NULL;
-    data = malloc(sizeof(MainMenuData));
-    data->settings = settings;
-    data->pulse_amt = 0;
+void mainmenu_start(Settings *settings) {
+    printf("inside mainmenu_start()\n");
+
+    g_mainmenu_data.settings = settings;
+    g_mainmenu_data.pulse_amt = 0;
 
     float render_vertices[] = {
         //  Position        Texcoords
@@ -53,92 +56,98 @@ void mainmenu_start(Phase *this, Settings *settings) {
         -1, -1, 0,  0.0f, 1.0f,  // Bottom-left
     };
 
-    data->fbo = create_fbo(800, 600);
+    g_mainmenu_data.fbo = create_fbo(800, 600);
+    g_mainmenu_data.texture = load_texture_from_file("default.png");
 
-    data->texture = load_texture_from_file("default.png");
+    g_mainmenu_data.render_vbo = create_vbo(STATIC_DRAW, render_vertices, sizeof(render_vertices));
+    g_mainmenu_data.fbo_quad_vbo = create_vbo(STATIC_DRAW, quad_vertices, sizeof(quad_vertices));
 
-    data->render_vbo = create_vbo(STATIC_DRAW, render_vertices, sizeof(render_vertices));
-    data->fbo_quad_vbo = create_vbo(STATIC_DRAW, quad_vertices, sizeof(quad_vertices));
+    g_mainmenu_data.render_vao = create_vao();
+    g_mainmenu_data.fbo_vao = create_vao();
 
-    data->render_vao = create_vao();
-    data->fbo_vao = create_vao();
-
-     data->program = compile_program_sources(texture_vertex_shader,
+    g_mainmenu_data.program = compile_program_sources(texture_vertex_shader,
             texture_frag_shader);
     
     //bind VAO for rendering
-    bind_vao(&data->render_vao);
-    bind_vbo(&data->render_vbo);
-    bind_texture(&data->texture);
+    bind_vao(&g_mainmenu_data.render_vao);
+    bind_vbo(&g_mainmenu_data.render_vbo);
+    bind_texture(&g_mainmenu_data.texture);
 
+    bind_shader_program(&g_mainmenu_data.program);
 
-    bind_program(&data->program);
-    
-    set_program_attrib(&data->program, "in_pos", 3, GL_FLOAT, 5 * sizeof(float), 0);
-    set_program_attrib(&data->program, "in_texcoord", 2, GL_FLOAT, 5 * sizeof(float), (void *)(3 * sizeof(float)));
+    set_shader_program_attrib(&g_mainmenu_data.program, "in_pos", 3, GL_FLOAT,
+                              5 * sizeof(float), 0);
+    set_shader_program_attrib(&g_mainmenu_data.program, "in_texcoord", 2,
+                              GL_FLOAT, 5 * sizeof(float),
+                              (void *) (3 * sizeof(float)));
 
 
     //bind VAO for this shader
-    bind_vao(&data->fbo_vao);
-    bind_vbo(&data->fbo_quad_vbo);
-    bind_texture(&data->fbo.color_texture);
+    bind_vao(&g_mainmenu_data.fbo_vao);
+    bind_vbo(&g_mainmenu_data.fbo_quad_vbo);
+    bind_texture(&g_mainmenu_data.fbo.color_texture);
 
-    bind_program(&data->program);
-    
-    set_program_attrib(&data->program, "in_pos", 3, GL_FLOAT, 5 * sizeof(float), 0);
-    set_program_attrib(&data->program, "in_texcoord", 2, GL_FLOAT, 5 * sizeof(float), (void *)(3 * sizeof(float)));
+    bind_shader_program(&g_mainmenu_data.program);
 
-    this->data = data;
-}
-void mainmenu_update(Phase *this, float dt) {
-    MainMenuData *data = this->data;
-    data->pulse_amt = (data->pulse_amt > 3.14 ? 0 : data->pulse_amt) + dt;
-    
-    
-    UniformLoc phase_loc = get_program_uniform(&data->program, "phase");
-    glUniform1f(phase_loc, data->pulse_amt);
-    
-    mat4x4 rotation_mat;
-    mat4x4_identity(rotation_mat);
-    mat4x4_rotate(rotation_mat, rotation_mat, 0, 1, 0, data->pulse_amt);
-    UniformLoc rotation_mat_uniform = get_program_uniform(&data->program, "rotation");
-    glUniformMatrix4fv(rotation_mat_uniform, 1, GL_FALSE, &rotation_mat[0][0]);
-    printf("\n in update");
+    set_shader_program_attrib(&g_mainmenu_data.program, "in_pos", 3, GL_FLOAT,
+                              5 * sizeof(float), 0);
+    set_shader_program_attrib(&g_mainmenu_data.program, "in_texcoord", 2,
+                              GL_FLOAT, 5 * sizeof(float),
+                              (void *) (3 * sizeof(float)));
 }
 
-void mainmenu_draw(const Phase *this, SDL_Window *w) {
+void mainmenu_update(float dt) {
+    g_mainmenu_data.pulse_amt = (g_mainmenu_data.pulse_amt > 3.14 ? 0 : g_mainmenu_data.pulse_amt) + dt;
+    
+    
+    UniformLoc phase_loc = get_program_uniform(&g_mainmenu_data.program, "phase");
+    glUniform1f(phase_loc, g_mainmenu_data.pulse_amt);
+    
+    mat4x4 modelview_mat;
+    mat4x4_identity(modelview_mat);
+    mat4x4_rotate(modelview_mat, modelview_mat, 0, 1, 0, g_mainmenu_data.pulse_amt * 5);
+    UniformLoc modelview_mat_uniform = get_program_uniform(&g_mainmenu_data.program, "modelview");
+    glUniformMatrix4fv(modelview_mat_uniform, 1, GL_FALSE, &modelview_mat[0][0]);
+
+}
+
+void mainmenu_draw(SDL_Window *w) {
     unbind_fbo();
-    glClearColor(0.1, 0, 0, 0);
+    glClearColor(1, 0, 0, 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    MainMenuData *data = this->data;
-    bind_fbo(&data->fbo);
-        glClearColor(0, 1, 0, 0);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        bind_vao(&data->render_vao);
-        bind_texture(&data->texture);
-        bind_program(&data->program);
+    bind_fbo(&g_mainmenu_data.fbo);
+        //glClearColor(0, 1, 0, 0);
+        //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        bind_vao(&g_mainmenu_data.render_vao);
+        bind_texture(&g_mainmenu_data.texture);
+    bind_shader_program(&g_mainmenu_data.program);
 
         glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
     unbind_fbo();
 
-    
-    bind_vao(&data->fbo_vao);
-    bind_texture(&data->fbo.color_texture);
+    mat4x4 modelview_mat;
+    mat4x4_identity(modelview_mat);
+    mat4x4_rotate(modelview_mat, modelview_mat, 0, 1, 0, -g_mainmenu_data.pulse_amt);
+    UniformLoc modelview_mat_uniform = get_program_uniform(&g_mainmenu_data.program, "modelview");
+    glUniformMatrix4fv(modelview_mat_uniform, 1, GL_FALSE, &modelview_mat[0][0]);
+
+
+    bind_vao(&g_mainmenu_data.fbo_vao);
+    bind_texture(&g_mainmenu_data.fbo.color_texture);
+
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-   
+
 }
 
-Event mainmenu_handle_events(Phase *this, SDL_Event *e) {
-    MainMenuData *data = this->data;
+Event mainmenu_handle_events(SDL_Event *e) {
     Event event = new_event_none();
-
 
     if (e->type == SDL_QUIT) {
         event.type = EventQuit;
     }
     if (e->type == SDL_KEYDOWN) {
-        if (e->key.keysym.sym == data->settings->key_escape) {
+        if (e->key.keysym.sym == g_mainmenu_data.settings->key_escape) {
             event.type = EventQuit;
         }
     }
@@ -147,80 +156,66 @@ Event mainmenu_handle_events(Phase *this, SDL_Event *e) {
 }
 
 void init_main_menu() {
-    g_mainmenu_phase = malloc(sizeof(Phase));
-    g_mainmenu_phase->fp_start = mainmenu_start;
-    g_mainmenu_phase->fp_update = mainmenu_update;
-    g_mainmenu_phase->fp_draw = mainmenu_draw;
-    g_mainmenu_phase->fp_handle_events = mainmenu_handle_events;
+    g_mainmenu_phase.fp_start = mainmenu_start;
+    g_mainmenu_phase.fp_update = mainmenu_update;
+    g_mainmenu_phase.fp_draw = mainmenu_draw;
+    g_mainmenu_phase.fp_handle_events = mainmenu_handle_events;
 
-    MainMenuData* mainmenu_data = malloc(sizeof(MainMenuData));
-    mainmenu_data->settings = NULL;
-    g_mainmenu_phase->data = mainmenu_data;
+    g_mainmenu_data.settings = NULL;
 }
 
+//-----------------
+// PLAYGROUND PHASE
+#include "level.h"
+typedef struct PlaygroundData {
+    Settings *settings;
+    Level *level;
+} PlaygroundData;
+static PlaygroundData g_playground_data;
 
-/* LOADER PHASE */
+void playground_start(Settings *settings) {
+    g_playground_data.settings = settings;
 
-// loader phase
-/*
-   typedef struct LoaderPhaseData{
-   void *memory;
-   } LoaderPhaseData;
-   */
-//game phase
+    if(settings->current_level < 0) {
+        g_playground_data.level = create_sandbox_level();
+    }
+    else {
+        assert(false && "level loading not implemented yet");
+    }
+};
 
-/*
-   typedef enum {
-   GameLevelIntro,
-   } GameLevel;
+Event playground_handle_events(SDL_Event *e) {
+    Event event = new_event_none();
 
-   typedef struct PhaseGameData {
-   GameLevel level;
-   Settings *settings;
-   } PhaseGameData;
+    if (e->type == SDL_QUIT) {
+        event.type = EventQuit;
+    }
 
+    if (e->type == SDL_KEYDOWN) {
+        if (e->key.keysym.sym == g_playground_data.settings->key_escape) {
+            event.type = EventQuit;
+        }
+    }
 
-   void game_start(Phase *this, Settings *settings) {
-   PhaseGameData *data = this->data;
-   data->settings = settings;
-   }
+    return event;
+}
 
-   void game_update(Phase *this, float dt) {
-   printf("\b in game update");
-   }
+void playground_update(float dt) {
+    level_step_physics(g_playground_data.level, dt);
+};
 
-   void game_draw(const Phase *this, SDL_Window *w) {
-   glClearColor((rand() % 100) / 100.0, 0, 0, 0);
-   glClear(GL_COLOR_BUFFER_BIT);
-   }
+void playground_draw(SDL_Window *w) {
+    glClearColor(1, 0, 0, 0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-   Event game_handle_events(Phase *this, SDL_Event *e) {
-   MainMenuData *data = this->data;
-   Event event = new_event_none();
+    level_draw(g_playground_data.level);
 
+};
 
-   if (e->type == SDL_QUIT) {
-   event.type = EventQuit;
-   }
-   if (e->type == SDL_KEYDOWN) {
-   if (e->key.keysym.sym == data->settings->key_escape) {
-   event.type = EventQuit;
-   }
-   }
-
-   return event;
-   }
-
-   Phase phase_game_new() {
-   Phase phase_game;
-   phase_game.fp_start = game_start;
-   phase_game.fp_update = game_update;
-   phase_game.fp_draw = game_draw;
-   phase_game.fp_handle_events = game_handle_events;
-
-   PhaseGameData *data = malloc(sizeof(PhaseGameData));
-   data->settings = NULL;
-   phase_game.data = data;
-   return phase_game;
-   }
-   */
+void init_playground() {
+    g_playground_phase.fp_start = playground_start;
+    g_playground_phase.fp_update = playground_update;
+    g_playground_phase.fp_draw = playground_draw;
+    g_playground_phase.fp_handle_events = playground_handle_events;
+    g_playground_data.settings = NULL;
+};

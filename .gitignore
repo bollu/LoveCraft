@@ -40,3 +40,8 @@ build/
 build/**
 
 .idea/
+
+
+#VS CODE
+.vscode/
+*.VC.db
