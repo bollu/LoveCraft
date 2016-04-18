@@ -5,6 +5,21 @@
 #include "shaders.h"
 #include "linmath.h"
 
+//for rendering - 1 TILE = 32 pixels
+
+static const float one_tile_in_pixels = 32;
+static const float num_tiles_x_window = screen_pixel_width / one_tile_in_pixels;
+static const float num_tiles_y_window = screen_pixel_height / one_tile_in_pixels;
+
+//NDC: -1 to 1
+//(0, 0) -> (-1, -1)
+//(1280, 720) -> (1, 1)
+//
+//
+static const mat4x4 world_to_screen = {{2.0 / num_tiles_x_window, 0.0, 0.0, 0.0},
+                                       {0.0, 2.0/ num_tiles_y_window, 0.0, 0.0},
+                                       {0.0, 0.0, 1.0, 0.0},
+                                       {-1, -1, 0.0, 1.0}};
 static const int tileDim = 32;
 
 typedef struct Vec2 {
@@ -158,14 +173,11 @@ void level_step_physics(Level *l, float dt) {
 };
 
 void level_draw(Level *l) {
-    //static const float tile2pixel = 32;
-    //static const float pixel2tile = 1.0f / tile2pixel;
-
     float tile_vertices[] = {
-            -0.2,  0.2, 0, // Top-left
-            0.2 ,  0.2, 0,// Top-right
-            0.2, -0.2, 0, // Bottom-right
-            -0.2, -0.2, 0 // Bottom-left
+            0,  1, 0, // Top-left
+            1 , 1, 0,// Top-right
+            1, 0, 0, // Bottom-right
+            0, 0, 0 // Bottom-left
     };
 
     bind_vao(&l->tilemap_vao);
@@ -174,19 +186,21 @@ void level_draw(Level *l) {
     resend_vbo_data(&l->tilemap_vbo, tile_vertices, sizeof(tile_vertices));
 
     static float phase = 0.0;
-    for(int x = 0; x < 1; x++) {
-        for(int y = 0; y < 1; y++) {
+    for(int x = 0; x < num_tiles_x_window; x++) {
+        for(int y = 0; y < num_tiles_y_window - 1; y++) {
             phase += 0.01;
-            mat4x4 tilemap_transform = {{sin(phase), 0, 0, 0},
-                                        {0, cos(phase), 0, 0},
+            mat4x4 tilemap_transform = {{1, 0, 0, 0},
+                                        {0, 1, 0, 0},
                                         {0, 0, 1, 0},
-                                        {0, 0, 0, 1}};
+                                        {x, y, 0, 1}};
+
+            mat4x4_mul(tilemap_transform, world_to_screen, tilemap_transform);
 
             set_shader_program_attrib(&l->tilemap_shader, "in_pos", 3, GL_FLOAT,
                                       3 * sizeof(float), 0);
 
             UniformLoc color_loc = get_program_uniform(&l->tilemap_shader, "u_color");
-            glUniform4f(color_loc, 0, 0, 0.8, 0.3);
+            glUniform4f(color_loc, 0, x * 1.0 / num_tiles_x_window, sin(phase * 0.002), (float)y /num_tiles_y_window);
 
             UniformLoc modelview_mat_uniform = get_program_uniform(&l->tilemap_shader, "u_modelview");
             glUniformMatrix4fv(modelview_mat_uniform, 1, GL_FALSE, &tilemap_transform[0][0]);

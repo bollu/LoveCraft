@@ -20,3 +20,8 @@ Settings load_settings(const char* filepath);
 
 //Logging functions in the engine
 void g_log_error(const char *err_format, ...);
+
+
+
+static const float screen_pixel_width = 1280;
+static const float screen_pixel_height = 720;

@@ -14,7 +14,7 @@ const char debug_vertex_shader[] = \
     "in vec3 in_pos;\n"
     "uniform mat4 modelview;\n"
     "void main() {\n"
-    "gl_Position = vec4(in_pos.xyz, 1.0) * modelview;\n"
+    "gl_Position = modelview * vec4(in_pos.xyz, 1.0);\n"
     "}";
 
 
@@ -27,7 +27,7 @@ const char texture_vertex_shader[] = \
     "uniform mat4 modelview;\n"
     "void main() {\n"
     "    frag_texcoord = in_texcoord;\n"
-    "    gl_Position = vec4(in_pos.xyz, 1.0) * modelview;\n"
+    "    gl_Position = modelview * vec4(in_pos.xyz, 1.0);\n"
     "}";
 
 
@@ -56,6 +56,5 @@ const char color_vertex_shader[] = \
     "in vec3 in_pos;\n"
     "uniform mat4 u_modelview;\n"
     "void main() {\n"
-    "gl_Position = vec4(in_pos.xyz, 1.0) * u_modelview;\n"
-        "gl_Position.z = 0;\n"
+    "gl_Position = u_modelview * vec4(in_pos.xyz, 1.0);\n"
     "}";
