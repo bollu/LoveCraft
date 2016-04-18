@@ -5,6 +5,11 @@
 #include "shaders.h"
 #include "linmath.h"
 
+#define QUOTE(name) #name
+#define STR(macro) QUOTE(macro)
+
+#define v2print(v) printf("\n%s tx: %d | ty: %d | x : %f | y: %f", #v, v.tx, v.ty, v.x, v.y);
+
 //for rendering - 1 TILE = 32 pixels
 
 static const float one_tile_in_pixels = 32;
@@ -20,7 +25,7 @@ static const mat4x4 world_to_screen = {{2.0 / num_tiles_x_window, 0.0, 0.0, 0.0}
                                        {0.0, 2.0/ num_tiles_y_window, 0.0, 0.0},
                                        {0.0, 0.0, 1.0, 0.0},
                                        {-1, -1, 0.0, 1.0}};
-static const int tileDim = 32;
+static const float tileDim = one_tile_in_pixels;
 
 typedef struct Vec2 {
     int tx, ty;
@@ -29,19 +34,34 @@ typedef struct Vec2 {
 
 static const Vec2 veczero = {0, 0, 0, 0};
 
+float v2totalx(Vec2 v) {
+    return v.tx * tileDim + v.x;
+}
+
+float v2totaly(Vec2 v) {
+    return v.ty * tileDim + v.y;
+}
+
 Vec2 v2correct(Vec2 v) {
     Vec2 result;
 
-    int extraTilex = (int)(result.x / tileDim);
-    int extraTiley = (int)(result.y / tileDim);
+    int extraTilex = floor(v.x / tileDim);
+    int extraTiley = floor(v.y / tileDim);
     result.tx = v.tx + extraTilex;
     result.ty = v.ty + extraTiley;
     
-    result.x -= tileDim * extraTilex;
-    result.y -= tileDim * extraTiley; 
-    
-    assert(result.x >= 0 && result.y >= 0 && 
-           result.x < tileDim && result.y < tileDim);
+    result.x = v.x - tileDim * extraTilex;
+    result.y = v.y - tileDim * extraTiley;
+    /*
+    if(result.x < 0) {
+        result.x = tileDim - fabs(result.x);
+    }
+    if (result.y < 0) {
+        result.y = tileDim - fabs(result.y);
+    }
+    */
+    assert(result.x >= 0 && result.y >= 0);
+    assert(result.x <= tileDim && result.y <= tileDim);
 
     return result;
 
@@ -63,12 +83,11 @@ Vec2 v2neg(Vec2 v) {
     result.tx = -v.tx;
     result.ty = -v.ty;
     
-    result.x = tileDim - result.x;
-    result.y = tileDim - result.y;
-    assert(result.x >= 0 && result.y >= 0 && 
-           result.x < tileDim && result.y < tileDim);
-    
-    return result;
+    result.x = -v.x;
+    result.y = -v.y;
+
+
+    return v2correct(result);
 }
 
 Vec2 v2sub(Vec2 v1, Vec2 v2) {
@@ -76,17 +95,9 @@ Vec2 v2sub(Vec2 v1, Vec2 v2) {
 }
 
 Vec2 v2scale(Vec2 v, float scale) {
-    //(tile + float) * (iscale + fscalee)
-    //tile * iscale + (tile *fscale + float *fcale)
-    Vec2 result;
-    result.tx *= (int)(scale);
-    result.ty *= (int)(scale);
-
-    result.x *= scale;
-    result.x += tileDim * (scale - (int)(scale));
-
-    result.y *= scale;
-    result.y += tileDim * (scale - (int)(scale));
+    Vec2 result = veczero;
+    result.x = v2totalx(v) * scale;
+    result.y = v2totaly(v) * scale;
 
     return v2correct(result);
     
@@ -96,6 +107,8 @@ Vec2 vec2f(float x, float y) {
     Vec2 result = veczero;
     result.x = x;
     result.y = y;
+
+    v2print(v2correct(result));
 
     return v2correct(result);
 }
@@ -107,6 +120,13 @@ Vec2 vec2t(float x, float y) {
 
     return result;
 }
+
+typedef enum GameEventType{
+    GAME_EVENT_MOVE_LEFT,
+    GAME_EVENT_MOVE_RIGHT,
+    GAME_EVENT_NONE,
+} GameEventType;
+
 
 typedef int GameObjectId;
 typedef struct GameObject {
@@ -124,22 +144,83 @@ typedef struct GameObject {
     struct GameObject *nextlayer;
 } GameObject;
 
+GameObject new_gameobject() {
+    GameObject g;
+    g.alive = false;
+    g.dimx = g.dimy = 1;
 
+    g.collidesWithMask = 0;
+
+    g.pos = veczero;
+    g.vel = veczero;
+    g.accel = veczero;
+    g.mass = 1;
+
+    g.nextfree = NULL;
+    g.nextlayer = NULL;
+
+    return g;
+}
 
 static const int MAX_GAME_OBJECTS = 4000;
 //will take ~6 minutes at a speed of 10 tiles per second to get to the end.
-static const int MAX_TILEMAP_DIM = 32;
+static const int MAX_TILEMAP_DIM = 1000;
 
 typedef enum Tile {
-    Empty,
-    Solid
+    TILE_EMPTY,
+    TILE_SOLID
 } Tile;
+
+typedef struct Camera {
+    Vec2 target;
+    Vec2 current;
+    Vec2 vel;
+    Vec2 accel;
+    Vec2 shakeAmt;
+    mat4x4 transform_inv;
+} Camera;
+
+Camera new_camera() {
+    Camera cam;
+    cam.target = veczero;
+    cam.current = veczero;
+    cam.shakeAmt = veczero;
+    cam.vel = cam.accel = veczero;
+    mat4x4_identity(cam.transform_inv);
+    return cam;
+};
+
+
+void update_camera(Camera *cam, float dt) {
+    Vec2 delta_x = v2sub(cam->target, cam->current);
+    float k = 1;
+    float d = -1;
+
+    cam->accel = v2add(v2scale(delta_x, k), v2scale(cam->vel, d));
+
+    cam->vel = v2add(cam->vel, v2scale(cam->accel, dt));
+    cam->current = v2add(v2add(cam->current, v2scale(cam->vel, dt)), v2scale(cam->accel, 0.5 * dt * dt));
+
+    //v2print(cam->accel);
+    //v2print(cam->vel);
+    v2print(cam->target);
+    v2print(cam->current);
+    //cam->current = cam->target;
+
+    float cam_x = v2totalx(cam->current) + (rand() % 100) / 100.0 * v2totalx(cam->shakeAmt);
+    float cam_y = v2totaly(cam->current) + (rand() % 100) / 100.0 * v2totaly(cam->shakeAmt);
+    mat4x4 transform =  {{1, 0, 0, 0},
+                         {0, 1, 0, 0},
+                         {0, 0, 1, 0},
+                         {cam_x, cam_y, 0.0, 1.0}};
+
+    mat4x4_invert(cam->transform_inv, transform);
+}
+
 
 typedef struct Level {
     GameObject gos[MAX_GAME_OBJECTS];
     GameObject *freelist;
-
-    mat4x4 modelview_mat;
 
     Tile tilemap[MAX_TILEMAP_DIM][MAX_TILEMAP_DIM];
     Vec2 initial_spawn_loc;
@@ -147,10 +228,13 @@ typedef struct Level {
     VBO tilemap_vbo;
     ShaderProgram tilemap_shader;
     VAO tilemap_vao;
+
+    Camera camera;
 } Level;
 
 
-void level_step_physics(Level *l, float dt) {
+void level_step(Level *l, float dt) {
+    //update physics
     for(int i = 0; i < MAX_GAME_OBJECTS; i++) {
         GameObject *go = &l->gos[i];
         if(!go->alive) { continue; }
@@ -163,14 +247,29 @@ void level_step_physics(Level *l, float dt) {
         for(int x = 0; x < go->dimx; x++) {
             for(int y = 0; y < go->dimy; y++) {
                 Tile tile = l->tilemap[go->pos.tx + x][go->pos.ty + y];
-                if (tile == Solid) {
+                if (tile == TILE_SOLID) {
                     totalImpulse = v2add(totalImpulse, v2scale(vec2f(-x, -y), go->mass));
                 }
             }
         }
         go->accel = v2add(go->accel, totalImpulse);
     }
+    //update camera
+    update_camera(&l->camera, dt);
 };
+
+void level_recieve_event(Level *l, GameEventType type) {
+    switch (type) {
+        case GAME_EVENT_MOVE_LEFT:
+            l->camera.target = v2sub(l->camera.target, vec2f(0.8, 0));
+            break;
+        case GAME_EVENT_MOVE_RIGHT:
+            l->camera.target = v2add(l->camera.target, vec2f(1.2, 0));
+            break;
+        default:
+            g_log_error("unable to handle game event type: %d", type);
+    }
+}
 
 void level_draw(Level *l) {
     float tile_vertices[] = {
@@ -187,13 +286,17 @@ void level_draw(Level *l) {
 
     static float phase = 0.0;
     for(int x = 0; x < num_tiles_x_window; x++) {
-        for(int y = 0; y < num_tiles_y_window - 1; y++) {
+        for(int y = 0; y < num_tiles_y_window; y++) {
+            if (l->tilemap[x][y] == TILE_EMPTY) {
+                continue;
+            }
             phase += 0.01;
             mat4x4 tilemap_transform = {{1, 0, 0, 0},
                                         {0, 1, 0, 0},
                                         {0, 0, 1, 0},
                                         {x, y, 0, 1}};
 
+            mat4x4_mul(tilemap_transform, l->camera.transform_inv, tilemap_transform);
             mat4x4_mul(tilemap_transform, world_to_screen, tilemap_transform);
 
             set_shader_program_attrib(&l->tilemap_shader, "in_pos", 3, GL_FLOAT,
@@ -212,11 +315,11 @@ void level_draw(Level *l) {
 
 void _init_level(Level *l) {
     for(int i = 0; i < MAX_GAME_OBJECTS; i++) {
-        l->gos[i].alive = false;
+        l->gos[i] = new_gameobject();
     }
 
     l->freelist = NULL;
-
+    l->camera = new_camera();
 }
 
 Level* create_sandbox_level() {
@@ -225,11 +328,11 @@ Level* create_sandbox_level() {
 
     for(int i = 0; i < MAX_TILEMAP_DIM; i++) {
         for(int j = 0; j < MAX_TILEMAP_DIM; j++) {
-            l->tilemap[i][j] = Empty;
+            l->tilemap[i][j] = TILE_EMPTY;
         }
     }
     for(int i = 0; i < MAX_TILEMAP_DIM; i++) {
-        l->tilemap[i][MAX_TILEMAP_DIM - 1] = Solid;
+        l->tilemap[i][0] = TILE_SOLID;
     }
 
     l->initial_spawn_loc = vec2t(3, MAX_TILEMAP_DIM - 2);
@@ -241,4 +344,5 @@ Level* create_sandbox_level() {
 
     return l;
 };
+
 

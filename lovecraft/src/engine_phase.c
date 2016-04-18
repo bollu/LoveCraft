@@ -190,18 +190,45 @@ Event playground_handle_events(SDL_Event *e) {
     if (e->type == SDL_QUIT) {
         event.type = EventQuit;
     }
+    static bool move_left_pressed = false;
+    static bool move_right_pressed = false;
 
     if (e->type == SDL_KEYDOWN) {
         if (e->key.keysym.sym == g_playground_data.settings->key_escape) {
             event.type = EventQuit;
         }
+
+        if(e->key.keysym.sym == SDLK_LEFT)  {
+            move_left_pressed = true;
+        }
+        if(e->key.keysym.sym == SDLK_RIGHT)  {
+            move_right_pressed = true;
+        }
+    }
+    else if (e->type == SDL_KEYUP) {
+
+        if(e->key.keysym.sym == SDLK_LEFT)  {
+            move_left_pressed = false;
+        }
+        if(e->key.keysym.sym == SDLK_RIGHT)  {
+            move_right_pressed = false;
+        }
+    }
+
+    if (move_left_pressed) {
+        level_recieve_event(g_playground_data.level, GAME_EVENT_MOVE_LEFT);
+
+    }
+
+    if(move_right_pressed) {
+        level_recieve_event(g_playground_data.level, GAME_EVENT_MOVE_RIGHT);
     }
 
     return event;
 }
 
 void playground_update(float dt) {
-    level_step_physics(g_playground_data.level, dt);
+    level_step(g_playground_data.level, dt);
 };
 
 void playground_draw(SDL_Window *w) {
